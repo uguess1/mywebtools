@@ -4,9 +4,10 @@ import time
 import collections
 import tqdm  # 进度条库
 import multiprocessing as mp
+import setting
 
-core_num = 14
-value = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ%&^@_.-!{}"
+core_num = setting.CORE_NUM
+value = setting.VALUE
 '''
 haveget:
         length:数据库长度
@@ -417,32 +418,32 @@ def get_data(table, column, url):
 
 def run(url, get):
     try:
-        logger.info('{0}  正在获取当前数据库名长度......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+        logger.info('正在获取当前数据库名长度......')
         get_length_database(url)
-        logger.info('{0}  正在获取当前数据库名......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+        logger.info('正在获取当前数据库名......')
         get_database(url)
         print("\r", ".....the database name is :" + haveget['database']['curr'], flush=True)
     except:
-        logger.error("注入目标非时间盲注....")
+        logger.error("注入目标与模式不匹配....")
 
     if get in ('table', 'columninfo', 'infomation', 'all'):
         try:
-            logger.info('{0}  正在获取当前数据库内表单数......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+            logger.info('正在获取当前数据库内表单数......')
             get_table_num(url)
-            logger.info('{0}  正在获取表单名长度......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+            logger.info('正在获取表单名长度......')
             get_length_table(url)
-            logger.info('{0}  正在获取当前数据库表名......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+            logger.info('正在获取当前数据库表名......')
             get_table(url)
         except:
             logger.error("获取表信息时出错....")
 
     if get in ('columninfo', 'infomation', 'all'):
         try:
-            logger.info('{0}  正在获取当前各表列数......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+            logger.info('正在获取当前各表列数......')
             get_column_num(url)
-            logger.info('{0}  正在获取各列名长度......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+            logger.info('正在获取各列名长度......')
             get_length_column(url)
-            logger.info('{0}  正在获取当前表列名......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+            logger.info('正在获取当前表列名......')
             get_column(url)
         except:
             logger.error("获取列信息时出错....")
@@ -451,13 +452,13 @@ def run(url, get):
         try:
             # 处理选择
             chooseTable, chooseColumn = resolve_choose()
-            logger.info('{0}  获取表单数据行数......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+            logger.info('获取表单数据行数......')
             get_num_data(chooseTable, chooseColumn, url)
-            logger.info('{0}  获取数据长度......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+            logger.info('获取数据长度......')
             get_length_data(chooseTable, chooseColumn, url)
-            logger.info('{0}  获取数据......'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+            logger.info('获取数据......')
             get_data(chooseTable, chooseColumn, url)
-            logger.info('{0}  获取完毕！'.format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+            logger.info('获取完毕！')
         except:
             logger.error("获取数据库数据时出错....")
 
